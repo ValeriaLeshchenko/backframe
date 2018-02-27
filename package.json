@@ -1,0 +1,15 @@
+{
+  "name": "backframe",
+  "version": "1.0.1",
+  "description": "backend microservice framework",
+  "main": "index.js",
+  "directories": {
+    "lib": "lib"
+  },
+  "scripts": {
+    "test": "mocha"
+  },
+  "author": "Alex Sydorenko",
+  "license": "ISC",
+  "dependencies": {}
+}
