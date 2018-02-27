@@ -10,7 +10,7 @@ class Queue extends EventEmitter {
    * @param {string|void} options.path
    * */
 
-  constructor (options) {
+  constructor (options = {}) {
     super()
     this.running = 0 // current execution counter
     this.concurrency = options.concurrency || 1 // queue concurrency

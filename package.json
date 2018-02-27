@@ -11,5 +11,7 @@
   },
   "author": "Alex Sydorenko",
   "license": "ISC",
-  "dependencies": {}
+  "dependencies": {
+    "frame-net": "^1.0.3"
+  }
 }
