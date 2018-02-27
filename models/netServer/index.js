@@ -120,9 +120,14 @@ class NetServer extends NetLayer {
             return
           }
 
-          // todo slice
-
+          const marker = message.body.readUInt8(0)
+          message.body = message.body.splice(1)
           this.queue.pushTask([message, socket._id, this.type, true])
+
+          if (marker === 1) {
+            message.body = emptyBuffer
+            socket.send(message)
+          }
         })
 
         this.clients.add(socket)

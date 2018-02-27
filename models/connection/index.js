@@ -6,6 +6,12 @@ const NetLayer = require('../netLayer')
 const { isValidMessage, packAuth } = require('../../lib')
 const { frame } = require('frame-net')
 
+const sendMarker = Buffer.alloc(1)
+const notifyMarker = Buffer.alloc(1)
+const fetchMarker = Buffer.alloc(1)
+notifyMarker.writeUInt8(1, 0)
+fetchMarker.writeUInt8(2, 0)
+
 class Connection extends NetLayer {
 
   constructor (parent, options) {
@@ -25,7 +31,7 @@ class Connection extends NetLayer {
   /**
    * @method fetch
    * @description send request to server
-   * @param {object} message - buffer instance or frame-net object
+   * @param {object} message - buffer instance
    * @param {number|function} timeout -
    * @param {function} callback -
    * @callback {null|object}
@@ -38,7 +44,7 @@ class Connection extends NetLayer {
     }
 
     this.socket
-      .fetch(message, timeout)
+      .fetch(Buffer.concat([fetchMarker, message]), timeout)
       .then((result) => callback(null, result))
       .catch(callback)
   }
@@ -46,22 +52,22 @@ class Connection extends NetLayer {
   /**
    * @method notify
    * @description push data to queue
-   * @param {object} message - buffer instance or frame-net object
+   * @param {object} message - buffer instance
    * */
 
   notify (message) {
-    this.outboundQueue.pushTask(message)
+    this.outboundQueue.pushTask(Buffer.concat([notifyMarker, message]))
   }
 
   /**
    * @method send
    * @description send message to server without confirmation
-   * @param {object} message - buffer instance or frame-net object
+   * @param {object} message - buffer instance
    * @returns {void}
    * */
 
   send (message) {
-    this.socket.send(message)
+    this.socket.send(Buffer.concat([sendMarker, message]))
   }
 
   // * * * * * * * * * * * * * * SETUP
