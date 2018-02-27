@@ -12,6 +12,7 @@ class NetServer extends NetLayer {
   constructor (parent, options) {
     super(parent, options)
 
+    this.type = options.type
     // * * * * * * * * * * * * * * START VERIFICATION SETTINGS
     this.verificationTime = options.verificationTime || 1000
     // * * * * * * * * * * * * * * END VERIFICATION SETTINGS
@@ -20,6 +21,8 @@ class NetServer extends NetLayer {
     this.clients = new Set()
     this.relations = new Map()
     this.queue = new IncomingServerQueue(this)
+
+    this.assign()
   }
 
   // * * * * * * * * * * * * * * SETUP
@@ -36,15 +39,14 @@ class NetServer extends NetLayer {
           this.assign()
         }, 1000)
       })
+
+    this.parent.setCondition('netServers', this.type, this._isReady = true)
   }
 
   close (err) {
     // experimental flow
     this.server.unref()
-
-    this.server.removeAllListeners('connection')
-    this.server.removeAllListeners('listening')
-    this.server.removeAllListeners('close')
+    this.server.removeAllListeners()
 
     for (let socket of this.clients) {
       this.relations.delete(socket._id)
@@ -80,9 +82,7 @@ class NetServer extends NetLayer {
       .on('error', (err) => {
         this.debug(err, `Server socket error (${ this.type })`)
 
-        socket.removeAllListeners('message')
-        socket.removeAllListeners('close')
-        socket.removeAllListeners('end')
+        socket.removeAllListeners()
 
         this.relations.delete(socket._id)
         this.clients.delete(socket)
@@ -121,13 +121,16 @@ class NetServer extends NetLayer {
           }
 
           const marker = message.body.readUInt8(0)
-          message.body = message.body.splice(1)
-          this.queue.pushTask([message, socket._id, this.type, true])
+          const body = message.body.slice(1)
 
           if (marker === 1) {
             message.body = emptyBuffer
             socket.send(message)
           }
+
+          message.body = body
+          this.queue.pushTask([message, socket._id, this.type, true])
+
         })
 
         this.clients.add(socket)
@@ -143,7 +146,9 @@ class NetServer extends NetLayer {
   // * * * * * * * * * * * * * * MESSAGING
 
   answer (message, socketId) {
-    this.relations.get(socketId).send(message)
+    if (this.relations.has(socketId) && !this.relations.get(socketId).destroyed) {
+      this.relations.get(socketId).send(message)
+    }
   }
 
   broadcast (message) {
